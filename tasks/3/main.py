@@ -456,7 +456,7 @@ def find_optimal_parameters(N=100, tol=6e-10, max_iter=50000):
     print()
 
     if best_params is not None:
-        print(f"✅ НАЙДЕНЫ ОПТИМАЛЬНЫЕ ПАРАМЕТРЫ:")
+        print("✅ НАЙДЕНЫ ОПТИМАЛЬНЫЕ ПАРАМЕТРЫ:")
         print(f"   dt = {best_params[0]:.2e}")
         print(f"   gamma = {best_params[1]:.2f}")
         print(f"   Итераций до сходимости: {best_iterations}")
