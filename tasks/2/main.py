@@ -1,3 +1,4 @@
+# type: ignore
 import numpy as np
 from typing import Callable, List, Tuple, Optional
 import matplotlib.pyplot as plt
@@ -56,7 +57,7 @@ class Task2:
         """
         Численное вычисление матрицы Якоби методом конечных разностей
 
-        J[i,j] = ∂F_i/∂x_j ≈ (F_i(x + h*e_j) - F_i(x)) / h
+        J[i,j] = dF_i/dx_j =~ (F_i(x + h*e_j) - F_i(x)) / h
         """
         J = np.zeros((self.n, self.n))
         Fx = self.F(x)
@@ -114,13 +115,13 @@ class Task2:
             print("=" * 80)
             print(f"\nРазмерность системы: {self.n}")
             print(f"Начальное приближение: {x0}")
-            print(f"Точность: ||Δx|| < {self.tol}")
+            print(f"Точность: ||dx|| < {self.tol}")
             print(
                 f"Метод вычисления Якоби: {'аналитический' if self.use_analytic_jacobian else 'численный'}"
             )
             print("\n" + "-" * 80)
             print(
-                f"{'Итер':<6} {'Норма Δx':<15} {'Норма F(x)':<15} {'Решение':<30}"
+                f"{'Итер':<6} {'Норма dx':<15} {'Норма F(x)':<15} {'Решение':<30}"
             )
             print("-" * 80)
 
@@ -129,7 +130,7 @@ class Task2:
             F_val = self.F(x)
             J_val = self.jacobian(x)
 
-            # Решаем систему J·Δx = -F
+            # Решаем систему J·dx = -F
             try:
                 delta = np.linalg.solve(J_val, -F_val)
             except np.linalg.LinAlgError:
@@ -261,7 +262,7 @@ class Task2:
             label=f"Точность ({self.tol})",
         )
         ax1.set_xlabel("Номер итерации")
-        ax1.set_ylabel("Норма вектора смещения ||Δx||")
+        ax1.set_ylabel("Норма вектора смещения ||dx||")
         ax1.set_title("Сходимость метода Ньютона (норма смещения)")
         ax1.grid(True, alpha=0.3, linestyle="--")
         ax1.legend()
@@ -282,17 +283,11 @@ class Task2:
 
         plt.show()
 
-
-# ============================================================================
-# ПРИМЕРЫ ИСПОЛЬЗОВАНИЯ
-# ============================================================================
-
-
-def example_1():
+def example_without_analytic_jacobian():
     """Пример 1: Решение системы из задания"""
-    print("\n" + "█" * 80)
+    print("\n" + "=" * 80)
     print("ПРИМЕР 1: Решение системы из задания")
-    print("█" * 80)
+    print("=" * 80)
 
     # Определяем функции системы
     def f1(x1, x2, x3):
@@ -330,20 +325,20 @@ def example_1():
     return solver
 
 
-def example_3_with_analytic_jacobian():
-    """Пример 3: С аналитическим якобианом для ускорения"""
-    print("\n" + "█" * 80)
-    print("ПРИМЕР 3: С аналитическим якобианом")
-    print("█" * 80)
+def example_with_analytic_jacobian():
+    """Пример c аналитическим якобианом"""
+    print("\n" + "=" * 80)
+    print("ПРимер c аналитическим якобианом")
+    print("=" * 80)
 
     class FastSolver(Task2):
         def _analytic_jacobian(self, x: np.ndarray) -> np.ndarray:
-            """Аналитический якобиан для системы из примера 2"""
+            """Аналитический якобиан"""
             J = np.zeros((2, 2))
-            J[0, 0] = 2 * x[0]  # ∂f1/∂x
-            J[0, 1] = 2 * x[1]  # ∂f1/∂y
-            J[1, 0] = x[1]  # ∂f2/∂x
-            J[1, 1] = x[0]  # ∂f2/∂y
+            J[0, 0] = 2 * x[0]  # df1/dx
+            J[0, 1] = 2 * x[1]  # df1/dy
+            J[1, 0] = x[1]  # df2/dx
+            J[1, 1] = x[0]  # df2/dy
             return J
 
     def f1(x, y):
@@ -366,4 +361,4 @@ def example_3_with_analytic_jacobian():
 
 
 if __name__ == "__main__":
-    solver1 = example_1()
+    solver1 = example_with_analytic_jacobian()

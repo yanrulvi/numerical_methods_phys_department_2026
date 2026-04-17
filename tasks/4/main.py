@@ -1,3 +1,4 @@
+# type: ignore
 import numpy as np
 import matplotlib.pyplot as plt
 from typing import Tuple, List, Optional
@@ -32,8 +33,8 @@ class Task4:
         self.filename = filename
         self.x_target = x_target
         self.true_value = true_value
-        self.x_nodes = None
-        self.y_nodes = None
+        self.x_nodes = []
+        self.y_nodes = []
         self._load_data()
 
     def _load_data(self) -> None:
@@ -289,7 +290,7 @@ class Task4:
         max_error_idx = np.argmax(errors_valid)
 
         print("\n" + "=" * 70)
-        print("СТАТИСТИЧЕСКАЯ СВОДКА")
+        print("СВОДКА")
         print("=" * 70)
         print(f"Точка экстраполяции: x = {self.x_target}")
         print(f"Точное значение f({self.x_target}) = {self.true_value:.15f}")
@@ -302,24 +303,6 @@ class Task4:
         print(
             f"Максимальная ошибка: {errors_valid[max_error_idx]:.4e} при M = {M_valid[max_error_idx]}"
         )
-        print(f"Средняя ошибка: {np.mean(errors_valid):.4e}")
-        print(f"Медианная ошибка: {np.median(errors_valid):.4e}")
-        print("=" * 70)
-
-        # Объяснение результатов
-        print("\nОБЪЯСНЕНИЕ РЕЗУЛЬТАТОВ:")
-        print("-" * 70)
-        print("1. При малых M (4-8) ошибка велика из-за недостатка информации")
-        print("   для построения адекватной модели поведения функции.")
-        print("\n2. При увеличении M до оптимального значения (∼8-12) ошибка")
-        print("   уменьшается, так как полином лучше аппроксимирует функцию.")
-        print("\n3. При дальнейшем увеличении M (>12) ошибка начинает расти")
-        print("   из-за эффекта Рунге - полиномы высокого порядка сильно")
-        print("   осциллируют между узлами и за их пределами.")
-        print("\n4. Экстраполяция полиномами высокого порядка численно")
-        print("   неустойчива и чувствительна к погрешностям округления.")
-        print("\n5. Оптимальное M находится в зоне баланса между качеством")
-        print("   аппроксимации и устойчивостью вычислений.")
         print("=" * 70)
 
 

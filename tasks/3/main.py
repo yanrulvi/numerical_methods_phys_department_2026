@@ -1,3 +1,4 @@
+# type: ignore
 import math
 import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
@@ -171,13 +172,15 @@ class Task3:
             grad = self._gradient(x_cur)
             grad_max = max(abs(g) for g in grad)
 
-            # Запись истории (прореженная)
+            # Запись истории
             if iteration % self.record_every == 0:
                 self.grad_history.append(grad_max)
                 self.V_history.append(self.potential_fun(x_cur))
 
             # Проверка сходимости
             if grad_max < self.tol:
+                self.grad_history.append(grad_max)
+                self.V_history.append(self.potential_fun(x_cur))
                 self.converged = True
                 self.n_iter = iteration
                 break
@@ -194,9 +197,7 @@ class Task3:
             v_new = [0.0] * (N - 1)
 
             for idx, j in enumerate(range(1, N)):
-                # v_new = gamma * (v_cur - dt * grad)
                 v_new[idx] = gamma * (v_cur[idx] - dt * grad[idx])
-                # x_new = x_cur + dt * v_new
                 x_new[j] = x_cur[j] + dt * v_new[idx]
 
             # Граничные условия Дирихле
@@ -207,7 +208,7 @@ class Task3:
             x_cur = x_new
             v_cur = v_new
         else:
-            # Цикл завершился без break - достигнут максимум итераций
+            # Цикл завершился без break, значит достигнут максимум итераций
             self.n_iter = self.max_iter
 
         # Сохраняем финальный результат
@@ -234,7 +235,7 @@ class Task3:
 
         # Теоретическая кривизна для сравнения
         theoretical_curvature = [
-            -0.5 * math.sqrt(abs(k - N / 2)) for k in range(1, N)
+            0.5 * math.sqrt(abs(k - N / 2)) for k in range(1, N)
         ]
 
         iters_recorded = [
@@ -244,7 +245,7 @@ class Task3:
         fig = plt.figure(figsize=figsize)
         gs = gridspec.GridSpec(2, 2, hspace=0.38, wspace=0.32)
 
-        # --- График 1: Профиль решения ---
+        # График 1: Профиль решения
         ax1 = fig.add_subplot(gs[0, 0])
         ax1.plot(k_nodes, x_vec, "b-", linewidth=1.8, label=r"$x_k$")
         ax1.axhline(0, color="k", linewidth=0.7, alpha=0.5)
@@ -254,7 +255,7 @@ class Task3:
         ax1.grid(True, alpha=0.3, linestyle="--")
         ax1.legend()
 
-        # --- График 2: Сходимость градиента ---
+        # График 2: Сходимость градиента
         ax2 = fig.add_subplot(gs[0, 1])
         ax2.semilogy(iters_recorded, self.grad_history, "r-", linewidth=1.2)
         ax2.axhline(
@@ -270,7 +271,7 @@ class Task3:
         ax2.grid(True, alpha=0.3, which="both", linestyle="--")
         ax2.legend(fontsize=9)
 
-        # --- График 3: Убывание потенциала (ИСПРАВЛЕНО - линейный масштаб) ---
+        # График 3: Убывание потенциала
         ax3 = fig.add_subplot(gs[1, 0])
 
         # Находим минимальное значение для сдвига (чтобы сделать все значения положительными)
@@ -309,7 +310,7 @@ class Task3:
             bbox=dict(boxstyle="round", facecolor="wheat", alpha=0.5),
         )
 
-        # --- График 4: Кривизна профиля (факт vs теория) ---
+        # График 4: Кривизна профиля
         ax4 = fig.add_subplot(gs[1, 1])
         ax4.plot(
             range(1, N), curvature, "b-", linewidth=1.2, label="Фактическая"
@@ -478,8 +479,9 @@ def find_optimal_parameters(N=100, tol=6e-10, max_iter=50000):
 
 
 if __name__ == "__main__":
+    max_iter = 100_000
     # Сначала находим оптимальные параметры
-    optimal_dt, optimal_gamma = find_optimal_parameters(N=100, max_iter=50000)
+    optimal_dt, optimal_gamma = find_optimal_parameters(N=100, max_iter=max_iter)
 
     if optimal_dt is not None:
         print()
@@ -496,9 +498,9 @@ if __name__ == "__main__":
             dt=optimal_dt,
             gamma=optimal_gamma,
             tol=6e-10,
-            max_iter=50000,
+            max_iter=max_iter,
         )
 
         solver.solve(verbose=True)
         solver.print_result()
-        solver.plot_results()
+        solver.plot_results(save_path="tasks/3/output_plot.png")
