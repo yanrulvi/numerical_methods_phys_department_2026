@@ -15,7 +15,7 @@ def task_1_function(x, N=10):
 
 class Task1:
     """
-    На отрезке [−2.5;2] при помощи метода бисекции вычислите все корни 𝑓(𝑥)
+    На отрезке [−2.5;2] при помощи метода бисекции вычислите все корни f(𝑥)
     с запрошенной точностью 10^(−14).
     """
 
@@ -184,6 +184,8 @@ class Task1:
         if save_path:
             plt.savefig(save_path, dpi=150, bbox_inches="tight")
             print(f"График сохранён в: {save_path}")
+
+        plt.ylim(-5, 10)
 
         plt.show()
 

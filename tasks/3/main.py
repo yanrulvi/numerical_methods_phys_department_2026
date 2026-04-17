@@ -14,9 +14,9 @@ def task3_potential(x_vec):
     :return(float): Значение потенциала
     """
     N = len(x_vec) - 1
-    alpha = 1e-4
+    alpha = 1e-8
 
-    V1 = sum(((x_vec[k + 1] - x_vec[k]) / alpha) ** 2 for k in range(N))
+    V1 = sum(((x_vec[k + 1] - x_vec[k])) ** 2 / alpha for k in range(N))
     V2 = sum(math.sqrt(abs(k - N / 2)) * x_vec[k] for k in range(1, N))
 
     return V1 + V2
@@ -35,8 +35,8 @@ def task3_gradient_analytical(x_vec):
     :return(list[float]): Градиент длины N-1 (только внутренние узлы)
     """
     N = len(x_vec) - 1
-    alpha = 1e-4
-    coeff = 2.0 / (alpha**2)
+    alpha = 1e-8
+    coeff = 2.0 / (alpha)
 
     grad = []
     for j in range(1, N):
@@ -106,10 +106,10 @@ class Task3:
 
         # Начальная скорость
         if v0 is None:
-            self.v0 = [0.0] * (N - 1)
+            self.v0 = [0.0] * (N + 1)
         else:
             if len(v0) != N - 1:
-                raise ValueError(f"v0 должен иметь длину N-1 = {N - 1}")
+                raise ValueError(f"v0 должен иметь длину N-1 = {N + 1}")
             self.v0 = list(v0)
 
         # Результаты (заполняются после solve)
@@ -223,13 +223,13 @@ class Task3:
             raise RuntimeError("Сначала вызовите solve()")
 
         N = self.N
-        alpha = 1e-4
+        alpha = 1e-8
         x_vec = self.x_min
         k_nodes = list(range(N + 1))
 
         # Конечные разности второго порядка
         curvature = [
-            (x_vec[k + 1] - 2 * x_vec[k] + x_vec[k - 1]) / alpha**2
+            (x_vec[k + 1] - 2 * x_vec[k] + x_vec[k - 1]) / alpha
             for k in range(1, N)
         ]
 
@@ -481,7 +481,11 @@ def find_optimal_parameters(N=100, tol=6e-10, max_iter=50000):
 if __name__ == "__main__":
     max_iter = 100_000
     # Сначала находим оптимальные параметры
-    optimal_dt, optimal_gamma = find_optimal_parameters(N=100, max_iter=max_iter)
+    # optimal_dt, optimal_gamma = find_optimal_parameters(N=500, max_iter=max_iter)
+
+    # Для N = 500 следующие оптимальные параметры
+    optimal_dt = 5e-05
+    optimal_gamma = 0.99
 
     if optimal_dt is not None:
         print()
@@ -494,7 +498,7 @@ if __name__ == "__main__":
         solver = Task3(
             potential_fun=task3_potential,
             analytical_grad_fun=task3_gradient_analytical,
-            N=100,
+            N=500,
             dt=optimal_dt,
             gamma=optimal_gamma,
             tol=6e-10,

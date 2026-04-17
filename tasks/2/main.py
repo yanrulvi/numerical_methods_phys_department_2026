@@ -7,7 +7,6 @@ import matplotlib.pyplot as plt
 class Task2:
     """
     Решение системы нелинейных уравнений методом Ньютона.
-    Производные вычисляются автоматически с помощью конечно-разностной аппроксимации.
     """
 
     def __init__(
@@ -106,7 +105,7 @@ class Task2:
         -----------
         np.ndarray : Найденное решение
         """
-        x = x0.copy()
+        x = x0.copy().astype(float)
         self.history = {"x": [x.copy()], "F": [self.F(x)], "delta": [np.inf]}
 
         if verbose:
@@ -121,7 +120,7 @@ class Task2:
             )
             print("\n" + "-" * 80)
             print(
-                f"{'Итер':<6} {'Норма dx':<15} {'Норма F(x)':<15} {'Решение':<30}"
+                f"{'Итер':<6} {'Норма dx':<15} {'Норма F(x)':<15} {'Решение':<50}"
             )
             print("-" * 80)
 
@@ -142,18 +141,21 @@ class Task2:
                 return x
 
             # Обновляем решение
-            x_new = x + delta
-
-            # Сохраняем историю
             delta_norm = np.linalg.norm(delta)
+            if delta_norm > 0.1:
+                delta = delta * 0.1 / delta_norm
+                delta_norm = 0.1
+            x_new = x + delta
+            
             F_norm = np.linalg.norm(F_val)
 
+            # Сохраняем историю
             self.history["x"].append(x_new.copy())
             self.history["F"].append(self.F(x_new))
             self.history["delta"].append(delta_norm)
 
-            if verbose and (iteration % 5 == 0 or delta_norm < 1e-6):
-                x_str = " ".join([f"{xi:8.4f}" for xi in x_new[:3]])
+            if verbose and (iteration % 1 == 0 or delta_norm < 1e-6):
+                x_str = " ".join([f"{xi:12.8f}" for xi in x_new[:3]])
                 if self.n > 3:
                     x_str += " ..."
                 print(
@@ -283,82 +285,125 @@ class Task2:
 
         plt.show()
 
-def example_without_analytic_jacobian():
-    """Пример 1: Решение системы из задания"""
-    print("\n" + "=" * 80)
-    print("ПРИМЕР 1: Решение системы из задания")
-    print("=" * 80)
 
+def solve_system_from_task():
+    """Решение системы из задания 2"""
+    print("\n" + "=" * 80)
+    print("ЗАДАНИЕ 2: Решение системы нелинейных уравнений")
+    print("=" * 80)
+    
     # Определяем функции системы
     def f1(x1, x2, x3):
         return 3 * x1 - np.cos(x2 * x3) - 0.5
-
+    
     def f2(x1, x2, x3):
-        return x1**2 - 81 * (x2 + 0.1) ** 2 + np.sin(x3) + 1.06
-
+        return x1**2 - 81 * (x2 + 0.1)**2 + np.sin(x3) + 1.06
+    
     def f3(x1, x2, x3):
         return np.exp(-x1 * x2) + 20 * x3 + (10 * np.pi) / 3 - 1
-
+    
     functions = [f1, f2, f3]
-
-    # Создаём решатель (с численным якобианом)
+    
+    # Создаём решатель с численным якобианом
     solver = Task2(
         functions=functions,
         n=3,
         tol=1e-12,
         max_iter=100,
-        use_analytic_jacobian=False,  # используем численное дифференцирование
+        use_analytic_jacobian=False,
     )
-
-    # Начальное приближение
+    
+    # Начальная точка - начало координат
     x0 = np.array([0.0, 0.0, 0.0])
-
-    # Решаем
+    
+    # Решаем систему
     solution = solver.solve(x0, verbose=True)
-
+    
     # Выводим результаты
     solver.print_solution()
-
+    
     # Строим график сходимости
     solver.plot_convergence()
-
+    
     return solver
 
 
-def example_with_analytic_jacobian():
-    """Пример c аналитическим якобианом"""
+def solve_system_with_analytic_jacobian():
+    """Решение системы с аналитическим якобианом (для сравнения)"""
     print("\n" + "=" * 80)
-    print("ПРимер c аналитическим якобианом")
+    print("ДОПОЛНИТЕЛЬНО: Решение с аналитическим якобианом")
     print("=" * 80)
-
-    class FastSolver(Task2):
+    
+    class AnalyticSolver(Task2):
         def _analytic_jacobian(self, x: np.ndarray) -> np.ndarray:
-            """Аналитический якобиан"""
-            J = np.zeros((2, 2))
-            J[0, 0] = 2 * x[0]  # df1/dx
-            J[0, 1] = 2 * x[1]  # df1/dy
-            J[1, 0] = x[1]  # df2/dx
-            J[1, 1] = x[0]  # df2/dy
+            """Аналитический якобиан для системы из задания"""
+            x1, x2, x3 = x
+            J = np.zeros((3, 3))
+            
+            # Производные первого уравнения
+            J[0, 0] = 3
+            J[0, 1] = x3 * np.sin(x2 * x3)
+            J[0, 2] = x2 * np.sin(x2 * x3)
+            
+            # Производные второго уравнения
+            J[1, 0] = 2 * x1
+            J[1, 1] = -162 * (x2 + 0.1)
+            J[1, 2] = np.cos(x3)
+            
+            # Производные третьего уравнения
+            J[2, 0] = -x2 * np.exp(-x1 * x2)
+            J[2, 1] = -x1 * np.exp(-x1 * x2)
+            J[2, 2] = 20
+            
             return J
-
-    def f1(x, y):
-        return x**2 + y**2 - 4
-
-    def f2(x, y):
-        return x * y - 1
-
-    functions = [f1, f2]
-
-    solver = FastSolver(
-        functions=functions, n=2, tol=1e-10, use_analytic_jacobian=True
+    
+    def f1(x1, x2, x3):
+        return 3 * x1 - np.cos(x2 * x3) - 0.5
+    
+    def f2(x1, x2, x3):
+        return x1**2 - 81 * (x2 + 0.1)**2 + np.sin(x3) + 1.06
+    
+    def f3(x1, x2, x3):
+        return np.exp(-x1 * x2) + 20 * x3 + (10 * np.pi) / 3 - 1
+    
+    functions = [f1, f2, f3]
+    
+    solver = AnalyticSolver(
+        functions=functions,
+        n=3,
+        tol=1e-12,
+        max_iter=100,
+        use_analytic_jacobian=True,
     )
-
-    x0 = np.array([2.0, 1.0])
+    
+    x0 = np.array([0.0, 0.0, 0.0])
     solution = solver.solve(x0, verbose=True)
     solver.print_solution()
-
+    
     return solver
 
 
 if __name__ == "__main__":
-    solver1 = example_with_analytic_jacobian()
+    # Решаем основную задачу
+    solver_numerical = solve_system_from_task()
+    
+    # Для сравнения решаем с аналитическим якобианом
+    print("\n" + "=" * 80)
+    print("СРАВНЕНИЕ МЕТОДОВ")
+    print("=" * 80)
+    solver_analytic = solve_system_with_analytic_jacobian()
+    
+    # Сравниваем результаты
+    print("\n" + "=" * 80)
+    print("СРАВНЕНИЕ РЕЗУЛЬТАТОВ")
+    print("=" * 80)
+    print("\nЧисленный якобиан:")
+    print(f"  x = [{solver_numerical.solution[0]:.12f}, {solver_numerical.solution[1]:.12f}, {solver_numerical.solution[2]:.12f}]")
+    print(f"  Итераций: {solver_numerical.iterations}")
+    
+    print("\nАналитический якобиан:")
+    print(f"  x = [{solver_analytic.solution[0]:.12f}, {solver_analytic.solution[1]:.12f}, {solver_analytic.solution[2]:.12f}]")
+    print(f"  Итераций: {solver_analytic.iterations}")
+    
+    diff = np.linalg.norm(solver_numerical.solution - solver_analytic.solution)
+    print(f"\nРазница между решениями: {diff:.12e}")
