@@ -5,31 +5,22 @@ from typing import Callable, List, Optional, Tuple
 from matplotlib.figure import Figure
 
 
-# Функции для конкретной задачи
 def original_integrand(x: float) -> float:
-    """Исходная подынтегральная функция."""
     return (x**1.5) * np.cos(x) / np.sqrt(x**2 - 1.0)
 
 
 def transformed_integrand(t: float) -> float:
-    """
-    Подынтегральная функция после замены x = sqrt(t^2 + 1).
-    g(t) = (t^2 + 1)^(1/4) * cos(sqrt(t^2 + 1))
-    """
     return ((t**2 + 1.0) ** 0.25) * np.cos(np.sqrt(t**2 + 1.0))
 
 
 def get_transformed_limits() -> Tuple[float, float]:
-    """Пределы после замены: t ∈ [0, sqrt(99)]."""
     return 0.0, np.sqrt(10.0**2 - 1.0)
 
 
 class Task6a:
-    """Вычисление определённого интеграла методом Ромберга."""
-
     def __init__(
         self,
-        f: Callable[[float], float],
+        f: Callable,
         a: float,
         b: float,
         N_start: int = 12,
@@ -52,17 +43,14 @@ class Task6a:
         self.iterations_done = 0
 
     def _trapezoid(self, N: int) -> float:
-        """Составное правило трапеций с N интервалами."""
         if N <= 0:
             return 0.0
         h = (self.b - self.a) / N
-        s = 0.5 * (self.f(self.a) + self.f(self.b))
-        for i in range(1, N):
-            s += self.f(self.a + i * h)
-        return s * h
+        x = np.linspace(self.a, self.b, N + 1)
+        y = self.f(x)
+        return h * (0.5 * y[0] + np.sum(y[1:-1]) + 0.5 * y[-1])
 
     def compute(self, verbose: bool = True) -> float:
-        """Запуск вычислений."""
         if verbose:
             print("=" * 70)
             print("МЕТОД РОМБЕРГА: ВЫЧИСЛЕНИЕ ИНТЕГРАЛА")
@@ -192,13 +180,9 @@ def plot_all(
 
     fig = plt.figure(figsize=(16, 18))
 
-    # Строка 1: Подынтегральные функции
-
-    # 1.1: Исходная функция
     ax1 = fig.add_subplot(3, 2, 1)
     x = np.linspace(x_start + 0.001, x_end, n_points)
     y = original_integrand(x)
-
     ax1.plot(x, y, "b-", linewidth=1.5)
     ax1.axhline(y=0, color="gray", linestyle="--", linewidth=0.8)
     ax1.set_xlabel("x", fontsize=10)
@@ -210,11 +194,9 @@ def plot_all(
     )
     ax1.grid(True, alpha=0.3)
 
-    # 1.2: Преобразованная функция
     ax2 = fig.add_subplot(3, 2, 2)
     t = np.linspace(t_start, t_end, n_points)
     g = transformed_integrand(t)
-
     ax2.plot(t, g, "g-", linewidth=1.5)
     ax2.axhline(y=0, color="gray", linestyle="--", linewidth=0.8)
     ax2.plot(
@@ -232,9 +214,6 @@ def plot_all(
     ax2.grid(True, alpha=0.3)
     ax2.legend(fontsize=8)
 
-    # Строка 2: Сходимость метода
-
-    # 2.1: Значения R(n,0) и R(n,n)
     ax3 = fig.add_subplot(3, 2, 3)
     ax3.plot(
         n_vals,
@@ -267,7 +246,6 @@ def plot_all(
     ax3.grid(True, alpha=0.3)
     ax3.legend(fontsize=7)
 
-    # 2.2: Ошибка
     ax4 = fig.add_subplot(3, 2, 4)
     mask = ~np.isnan(errors)
     ax4.semilogy(n_vals[mask], errors[mask], "m.-", linewidth=2, markersize=10)
@@ -278,7 +256,6 @@ def plot_all(
         linewidth=1.2,
         label=f"ε = {integrator.tol:.0e}",
     )
-
     for i, (n_val, err_val) in enumerate(zip(n_vals[mask], errors[mask])):
         if i < 6:
             ax4.annotate(
@@ -290,7 +267,6 @@ def plot_all(
                 fontsize=6,
                 color="darkred",
             )
-
     ax4.set_xlabel("Итерация n", fontsize=10)
     ax4.set_ylabel(r"$|R(n,n) - R(n-1,n-1)|$", fontsize=10)
     ax4.set_title(
@@ -299,20 +275,14 @@ def plot_all(
     ax4.grid(True, alpha=0.3)
     ax4.legend(fontsize=8)
 
-    # Строка 3: Анализ точности
-
-    # 3.1: Число верных знаков
     ax5 = fig.add_subplot(3, 2, 5)
     table = integrator.get_table()
     n_rows = len(table)
-
     colors = ["blue", "red", "green", "orange", "purple", "brown"]
     markers = ["o", "s", "D", "^", "v", "<"]
     max_m = min(6, max(len(row) for row in table))
-
     for m in range(max_m):
-        x_vals = []
-        y_vals = []
+        x_vals, y_vals = [], []
         for n in range(m, n_rows):
             if m < len(table[n]):
                 rel_err = (
@@ -323,7 +293,6 @@ def plot_all(
                 digits = -np.log10(max(rel_err, 1e-16))
                 x_vals.append(n)
                 y_vals.append(digits)
-
         if x_vals:
             ax5.plot(
                 x_vals,
@@ -334,13 +303,8 @@ def plot_all(
                 markersize=6,
                 label=f"R(n,{m})",
             )
-
     ax5.axhline(
-        y=15,
-        color="gray",
-        linestyle="--",
-        linewidth=1,
-        label="~15 знаков",
+        y=15, color="gray", linestyle="--", linewidth=1, label="~15 знаков"
     )
     ax5.set_xlabel("Итерация n", fontsize=10)
     ax5.set_ylabel("Число верных знаков", fontsize=10)
@@ -352,25 +316,20 @@ def plot_all(
     ax5.grid(True, alpha=0.3)
     ax5.legend(fontsize=7, loc="lower right")
 
-    # 3.2: Тепловая карта
     ax6 = fig.add_subplot(3, 2, 6)
     max_cols = min(8, max(len(row) for row in table))
     max_rows = min(12, len(table))
-
     heatmap_data = np.full((max_rows, max_cols), np.nan)
     for n in range(max_rows):
         for m in range(min(n + 1, max_cols)):
             heatmap_data[n, m] = abs(table[n][m] - I_exact)
-
     log_data = np.log10(heatmap_data + 1e-50)
-
     im = ax6.imshow(
         log_data,
         aspect="auto",
         cmap="RdYlGn_r",
         extent=[-0.5, max_cols - 0.5, max_rows - 0.5, -0.5],
     )
-
     for n in range(max_rows):
         for m in range(min(n + 1, max_cols)):
             val = heatmap_data[n, m]
@@ -386,7 +345,6 @@ def plot_all(
                     fontsize=5,
                     color=color,
                 )
-
     ax6.set_xticks(range(max_cols))
     ax6.set_xticklabels([f"m={m}" for m in range(max_cols)])
     ax6.set_yticks(range(max_rows))
@@ -396,11 +354,9 @@ def plot_all(
     ax6.set_title(
         "Тепловая карта: |R(n,m) − I|", fontsize=11, fontweight="bold"
     )
-
     cbar = plt.colorbar(im, ax=ax6, shrink=0.8)
     cbar.set_label(r"$\log_{10}(|\text{ошибка}|)$", fontsize=9)
 
-    # Общий заголовок
     plt.suptitle(
         "ЗАДАЧА 6: Визуализация результатов",
         fontsize=16,
@@ -417,16 +373,12 @@ def plot_all(
 
 
 def print_analysis_report(integrator: "Task6a") -> None:
-    """Вывод итогового отчёта."""
     data = integrator.get_convergence_data()
-
     print("\n" + "=" * 70)
     print("ИТОГОВЫЙ ОТЧЁТ")
     print("=" * 70)
-
     print("\nЗначение интеграла:")
     print(f"  I = {integrator.integral:.15f}")
-
     print("\nХод вычислений:")
     print(f"  {'n':<6} {'N':<12} {'R(n,n)':<24} {'Ошибка':<14}")
     print(f"  {'-' * 56}")
@@ -437,24 +389,19 @@ def print_analysis_report(integrator: "Task6a") -> None:
         err = data["errors"][i] if i > 0 else np.nan
         err_str = f"{err:.2e}" if not np.isnan(err) else "—"
         print(f"  {n:<6} {N:<12} {diag:<24.15e} {err_str:<14}")
-
     print("\nХарактеристики сходимости:")
     print(f"  Итераций до сходимости: {integrator.iterations_done}")
     print(f"  Достигнутая точность: {data['errors'][-1]:.2e}")
     print(f"  Порядок экстраполяции: {integrator.extrapolation_order}")
-
     trap_last = data["trapezoid"][-1]
     trap_err = abs(trap_last - integrator.integral)
     romb_err = data["errors"][-1] if not np.isnan(data["errors"][-1]) else 0.0
-
     print("\nСравнение с правилом трапеций:")
     print(f"  Трапеции (N={data['N'][-1]}): ошибка = {trap_err:.2e}")
     print(f"  Ромберг:           ошибка = {romb_err:.2e}")
 
 
-# Точка входа
 def main(show_plot: bool = True, save_plot: bool = True) -> None:
-
     print("=" * 70)
     print("ЗАДАЧА 6: ВЫЧИСЛЕНИЕ ИНТЕГРАЛА МЕТОДОМ РОМБЕРГА")
     print("=" * 70)
@@ -464,15 +411,9 @@ def main(show_plot: bool = True, save_plot: bool = True) -> None:
     print("Новые пределы: t ∈ [0, √99]\n")
 
     t_start, t_end = get_transformed_limits()
-
     integrator = Task6a(
-        f=transformed_integrand,
-        a=t_start,
-        b=t_end,
-        N_start=12,
-        tol=1e-14,
+        f=transformed_integrand, a=t_start, b=t_end, N_start=12, tol=1e-14
     )
-
     integrator.compute(verbose=True)
 
     print("\nПостроение графика...")
@@ -480,11 +421,8 @@ def main(show_plot: bool = True, save_plot: bool = True) -> None:
         integrator,
         save_path="tasks/6a/task6_result.png" if save_plot else None,
     )
-
-    # Отчёт
     print_analysis_report(integrator)
 
-    # Итог
     print(f"\n{'=' * 70}")
     print(f"ОТВЕТ: I = {integrator.integral:.15f}")
     print(f"{'=' * 70}")
