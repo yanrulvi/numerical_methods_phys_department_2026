@@ -33,7 +33,7 @@ for k in k_values:
     error = abs(I_N - I_exact)
 
     errors.append(error)
-    x_values.append(-k)   # 👈 ключевая правка
+    x_values.append(-k)
 
     print(f"k = {k}, N = {N}, I_N = {I_N}, error = {error}")
 
